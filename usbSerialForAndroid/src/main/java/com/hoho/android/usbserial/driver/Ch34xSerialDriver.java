@@ -63,6 +63,9 @@ public class Ch34xSerialDriver implements UsbSerialDriver {
 
 	public class Ch340SerialPort extends CommonUsbSerialPort {
 
+		private static final int CH341_BAUDBASE_FACTOR = 1532620800;
+		private static final int CH341_BAUDBASE_DIVMAX = 3;
+
 		private static final int USB_TIMEOUT_MILLIS = 5000;
 
 		private final int DEFAULT_BAUD_RATE = 9600;
@@ -271,27 +274,30 @@ public class Ch34xSerialDriver implements UsbSerialDriver {
 
 
 		private void setBaudRate(int baudRate) throws IOException {
-			int[] baud = new int[]{2400, 0xd901, 0x0038, 4800, 0x6402,
-					0x001f, 9600, 0xb202, 0x0013, 19200, 0xd902, 0x000d, 38400,
-					0x6403, 0x000a, 115200, 0xcc03, 0x0008};
+			int factor = (CH341_BAUDBASE_FACTOR / baudRate);
+			int divisor = CH341_BAUDBASE_DIVMAX;
 
-			for (int i = 0; i < baud.length / 3; i++) {
-				if (baud[i * 3] == baudRate) {
-					int ret = controlOut(0x9a, 0x1312, baud[i * 3 + 1]);
-					if (ret < 0) {
-						throw new IOException("Error setting baud rate. #1");
-					}
-					ret = controlOut(0x9a, 0x0f2c, baud[i * 3 + 2]);
-					if (ret < 0) {
-						throw new IOException("Error setting baud rate. #1");
-					}
-
-					return;
-				}
+			while ((factor > 0xfff0) && divisor > 0) {
+				factor >>= 3;
+				divisor--;
 			}
 
+			if (factor > 0xfff0) {
+				throw new IOException("Baud rate " + baudRate + " currently not supported");
+			}
 
-			throw new IOException("Baud rate " + baudRate + " currently not supported");
+			factor = 0x10000 - factor;
+			int a = (factor & 0xff00) | divisor;
+			int b = factor & 0xff;
+
+			int ret = controlOut(0x9a, 0x1312, a);
+			if (ret < 0) {
+				throw new IOException("Error setting baud rate. #1");
+			}
+			ret = controlOut(0x9a, 0x0f2c, b);
+			if (ret < 0) {
+				throw new IOException("Error setting baud rate. #1");
+			}
 		}
 
 
