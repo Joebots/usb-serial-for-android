@@ -165,6 +165,11 @@ public class Cp21xxSerialDriver implements UsbSerialDriver {
         }
 
         @Override
+        public boolean isOpened() {
+            return mConnection != null;
+        }
+
+        @Override
         public void close() throws IOException {
             if (mConnection == null) {
                 throw new IOException("Already closed");

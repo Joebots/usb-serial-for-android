@@ -135,6 +135,11 @@ public class CdcAcmSerialDriver implements UsbSerialDriver {
             }
         }
 
+        @Override
+        public boolean isOpened() {
+            return mConnection != null;
+        }
+
         private void openSingleInterface() throws IOException {
             // the following code is inspired by the cdc-acm driver
             // in the linux kernel

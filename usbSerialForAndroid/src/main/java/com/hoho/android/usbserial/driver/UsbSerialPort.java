@@ -107,6 +107,11 @@ public interface UsbSerialPort {
     public void open(UsbDeviceConnection connection) throws IOException;
 
     /**
+     * Checks if the port is already opened
+     */
+    boolean isOpened();
+
+    /**
      * Closes the port.
      *
      * @throws IOException on error closing the port.
